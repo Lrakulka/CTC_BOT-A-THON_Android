@@ -21,11 +21,16 @@ import android.os.Bundle;
 import android.app.Activity;
 import android.util.Log;
 import android.view.View;
-import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.CommonStatusCodes;
-import com.google.android.gms.vision.barcode.Barcode;
+import com.google.android.gms.samples.vision.barcodereader.domain.Product;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Main activity demonstrating how to pass extra parameters to an activity that
@@ -39,16 +44,19 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final int RC_BARCODE_CAPTURE = 9001;
     private static final String TAG = "BarcodeMain";
+    private Map<String, Product> availableProductBarcodes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        statusMessage = (TextView)findViewById(R.id.status_message);
-        barcodeValue = (TextView)findViewById(R.id.barcode_value);
+        statusMessage = (TextView) findViewById(R.id.status_message);
+        barcodeValue = (TextView) findViewById(R.id.barcode_value);
 
         findViewById(R.id.read_barcode).setOnClickListener(this);
+
+        availableProductBarcodes = getAvailableProductBarcodes();
     }
 
     /**
@@ -96,21 +104,54 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if (requestCode == RC_BARCODE_CAPTURE) {
             if (resultCode == CommonStatusCodes.SUCCESS) {
                 if (data != null) {
-                    Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
-                    statusMessage.setText(R.string.barcode_success);
-                    barcodeValue.setText(barcode.displayValue);
-                    Log.d(TAG, "Barcode read: " + barcode.displayValue);
+                    List<String> barcodes = data
+                            .getStringArrayListExtra(BarcodeCaptureActivity.BarcodeObjects);
+
+                    statusMessage.setText(R.string.barcodes_success);
+                    barcodeValue.setText(barcodes.toString());
+
+                    barcodes = filterBarCodes(barcodes);
+                    updateOrderList(barcodes);
+                    Log.d(TAG, "Barcodes read: " + barcodes.toString());
                 } else {
-                    statusMessage.setText(R.string.barcode_failure);
-                    Log.d(TAG, "No barcode captured, intent data is null");
+                    statusMessage.setText(R.string.barcodes_failure);
+                    Log.d(TAG, "No barcodes captured, intent data is null");
                 }
             } else {
-                statusMessage.setText(String.format(getString(R.string.barcode_error),
+                statusMessage.setText(String.format(getString(R.string.barcodes_error),
                         CommonStatusCodes.getStatusCodeString(resultCode)));
             }
         }
         else {
             super.onActivityResult(requestCode, resultCode, data);
         }
+    }
+
+    private void updateOrderList(List<String> barcodes) {
+        //TODO: fill with user List
+    }
+
+    private List<String> filterBarCodes(List<String> barcodes) {
+        StringBuilder unknownBarcodes = new StringBuilder();
+        List<String> correctBarcodes = new ArrayList<>();
+        for (String barcode : barcodes) {
+            if (availableProductBarcodes.containsKey(barcode)) {
+                correctBarcodes.add(barcode);
+            } else {
+                unknownBarcodes.append(" ").append(barcode);
+            }
+        }
+        if (unknownBarcodes.length() != 0) {
+            unknownBarcodes.insert(0, "Not available codes:");
+            Toast.makeText(this, unknownBarcodes.toString(), Toast.LENGTH_LONG).show();
+        }
+        return correctBarcodes;
+    }
+
+    private Map<String, Product> getAvailableProductBarcodes() {
+        Map<String, Product> availableProductBarcodes = new HashMap();
+
+
+        return availableProductBarcodes;
     }
 }

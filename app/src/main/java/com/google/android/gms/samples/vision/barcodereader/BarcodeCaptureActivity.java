@@ -44,13 +44,14 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSource;
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.CameraSourcePreview;
-
 import com.google.android.gms.samples.vision.barcodereader.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Activity for the multi-tracker app.  This app detects barcodes and displays the value with the
@@ -69,7 +70,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     // constants used to pass extra data in the intent
     public static final String AutoFocus = "AutoFocus";
     public static final String UseFlash = "UseFlash";
-    public static final String BarcodeObject = "Barcode";
+    public static final String BarcodeObjects = "Barcodes";
 
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
@@ -78,6 +79,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     // helper objects for detecting taps and pinches.
     private ScaleGestureDetector scaleGestureDetector;
     private GestureDetector gestureDetector;
+    private ArrayList<String> capturedBarCodes;
 
     /**
      * Initializes the UI and creates the detector pipeline.
@@ -106,9 +108,11 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         gestureDetector = new GestureDetector(this, new CaptureGestureListener());
         scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
 
-        Snackbar.make(mGraphicOverlay, "Tap to capture. Pinch/Stretch to zoom",
+        Snackbar.make(mGraphicOverlay, "Tap to finish capturing. Pinch/Stretch to zoom",
                 Snackbar.LENGTH_LONG)
                 .show();
+
+        capturedBarCodes = new ArrayList<>();
     }
 
     /**
@@ -334,7 +338,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
      */
     private boolean onTap(float rawX, float rawY) {
         // Find tap point in preview frame coordinates.
-        int[] location = new int[2];
+        /*int[] location = new int[2];
         mGraphicOverlay.getLocationOnScreen(location);
         float x = (rawX - location[0]) / mGraphicOverlay.getWidthScaleFactor();
         float y = (rawY - location[1]) / mGraphicOverlay.getHeightScaleFactor();
@@ -360,12 +364,22 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
         if (best != null) {
             Intent data = new Intent();
-            data.putExtra(BarcodeObject, best);
+            data.putExtra(BarcodeObjects, best);
             setResult(CommonStatusCodes.SUCCESS, data);
             finish();
             return true;
         }
-        return false;
+        return false;*/
+
+        if (capturedBarCodes.isEmpty()) {
+            return false;
+        } else {
+            Intent data = new Intent();
+            data.putStringArrayListExtra(BarcodeObjects, capturedBarCodes);
+            setResult(CommonStatusCodes.SUCCESS, data);
+            finish();
+            return true;
+        }
     }
 
     private class CaptureGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -431,6 +445,13 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
     @Override
     public void onBarcodeDetected(Barcode barcode) {
-        //do something with barcode data returned
+        if (capturedBarCodes.contains(barcode.displayValue)) {
+            Snackbar.make(mGraphicOverlay, "Barcode " + barcode.displayValue + " already captured",
+                    Snackbar.LENGTH_LONG).show();
+        } else {
+            Snackbar.make(mGraphicOverlay, "Barcode " + barcode.displayValue + " already captured",
+                    Snackbar.LENGTH_LONG).show();
+            capturedBarCodes.add(barcode.displayValue);
+        }
     }
 }
