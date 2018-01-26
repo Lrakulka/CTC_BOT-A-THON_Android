@@ -1,5 +1,7 @@
 package com.google.android.gms.samples.vision.barcodereader.domain;
 
+import java.math.BigDecimal;
+
 /**
  * @author Victor Letunovsky (@vletunovsky)
  */
@@ -19,6 +21,8 @@ public class Product {
     private Integer discount;
 
     private Integer bonus;
+
+    private BigDecimal price;
 
     public Product() {
     }
@@ -87,5 +91,13 @@ public class Product {
 
     public void setBonus(final Integer bonus) {
         this.bonus = bonus;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 }

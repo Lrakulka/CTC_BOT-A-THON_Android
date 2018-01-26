@@ -1,5 +1,9 @@
 package com.google.android.gms.samples.vision.barcodereader.domain;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 /**
  * @author Victor Letunovsky (@vletunovsky)
  */

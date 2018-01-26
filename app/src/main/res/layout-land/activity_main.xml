@@ -1,55 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin"
+    android:orientation="vertical"
     tools:context="com.google.android.gms.samples.vision.barcodereader.MainActivity">
 
-    <TextView
-        android:id="@+id/status_message"
+    <LinearLayout
+        android:id="@+id/barcode_menu"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginEnd="79dp"
-        android:layout_marginRight="79dp"
-        android:text="@string/barcode_header"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+        android:layout_height="40dp"
+        android:orientation="horizontal">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:id="@+id/barcode_value"
-        android:layout_below="@+id/status_message"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="110dp"
-        android:layout_alignRight="@+id/status_message"
-        android:layout_alignEnd="@+id/status_message" />
+        <Button
+            android:id="@+id/read_barcode"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="@string/read_barcode" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/read_barcode"
-        android:id="@+id/read_barcode"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        <ImageView
+            android:id="@+id/ctc_logo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:contentDescription="@string/logo_description"
+            android:src="@drawable/ctc_logo" />
 
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/barcode_value"
-        android:layout_marginBottom="123dp"
-        android:layout_marginLeft="146dp"
-        android:layout_marginStart="146dp"
-        android:layout_toEndOf="@+id/read_barcode"
-        android:layout_toRightOf="@+id/read_barcode"
-        android:src="@drawable/ctc_logo" />
+    </LinearLayout>
 
-</RelativeLayout>
+    <LinearLayout
+        android:id="@+id/order_menu"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="bottom"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/button5"
+            android:layout_width="111dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/set_time" />
+
+        <Button
+            android:id="@+id/send_order"
+            android:layout_width="1dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/send_order" />
+
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/order_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>
