@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
@@ -8,14 +9,16 @@
     tools:context="com.google.android.gms.samples.vision.barcodereader.MainActivity">
 
     <TextView
+        android:id="@+id/status_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="@string/barcode_header"
-        android:id="@+id/status_message"
         android:layout_alignParentEnd="true"
-        android:textAlignment="center"
-        android:layout_centerHorizontal="true" />
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="79dp"
+        android:layout_marginRight="79dp"
+        android:text="@string/barcode_header"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -35,23 +38,16 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
 
-    <Switch
+    <ImageView
+        android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/auto_focus"
-        android:id="@+id/auto_focus"
-        android:layout_above="@+id/read_barcode"
-        android:layout_alignParentStart="true"
-        android:layout_marginBottom="77dp"
-        android:checked="false" />
-
-    <Switch
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/use_flash"
-        android:id="@+id/use_flash"
-        android:layout_alignTop="@+id/auto_focus"
-        android:layout_alignEnd="@+id/barcode_value"
-        android:checked="false" />
+        android:layout_alignBottom="@+id/barcode_value"
+        android:layout_marginBottom="123dp"
+        android:layout_marginLeft="146dp"
+        android:layout_marginStart="146dp"
+        android:layout_toEndOf="@+id/read_barcode"
+        android:layout_toRightOf="@+id/read_barcode"
+        android:src="@drawable/ctc_logo" />
 
 </RelativeLayout>

@@ -1,6 +1,6 @@
-
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
@@ -9,14 +9,13 @@
     tools:context="com.google.android.gms.samples.vision.barcodereader.MainActivity">
 
     <TextView
+        android:id="@+id/status_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_alignEnd="@+id/read_barcode"
+        android:layout_alignRight="@+id/read_barcode"
         android:text="@string/barcode_header"
-        android:id="@+id/status_message"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_centerHorizontal="true" />
+        android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -38,25 +37,13 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
 
-    <CheckBox
+    <ImageView
+        android:id="@+id/ctc_logo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/auto_focus"
-        android:id="@+id/auto_focus"
-        android:layout_below="@+id/barcode_value"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="66dp"
-        android:checked="false" />
-
-    <CheckBox
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/use_flash"
-        android:id="@+id/use_flash"
-        android:layout_alignTop="@+id/auto_focus"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:checked="false" />
+        android:layout_above="@+id/barcode_value"
+        android:layout_toEndOf="@+id/read_barcode"
+        android:layout_toRightOf="@+id/read_barcode"
+        android:src="@drawable/ctc_logo" />
 
 </RelativeLayout>
