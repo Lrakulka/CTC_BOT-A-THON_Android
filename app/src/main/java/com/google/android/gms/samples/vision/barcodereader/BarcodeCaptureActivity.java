@@ -26,8 +26,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -53,6 +55,8 @@ import com.google.android.gms.vision.barcode.BarcodeDetector;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Activity for the multi-tracker app.  This app detects barcodes and displays the value with the
@@ -84,6 +88,8 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     private ScaleGestureDetector scaleGestureDetector;
     private GestureDetector gestureDetector;
     private ArrayList<String> capturedBarCodes;
+
+    private String lastBarcode;
 
     /**
      * Initializes the UI and creates the detector pipeline.
@@ -413,21 +419,38 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         }
     }
 
+    private CustomTask resetLastBarcode = new CustomTask();
     @Override
     public void onBarcodeDetected(Barcode barcode) {
-        if (capturedBarCodes.contains(barcode.displayValue)) {
-            Snackbar.make(mGraphicOverlay, "Barcode " + barcode.displayValue + " already captured",
-                    Snackbar.LENGTH_LONG).show();
-        } else {
-            Snackbar.make(mGraphicOverlay, "Barcode " + barcode.displayValue + " captured",
-                    Snackbar.LENGTH_LONG).show();
+        if (lastBarcode == null || !lastBarcode.equals(barcode.displayValue)) {
+            lastBarcode = barcode.displayValue;
+
+            handler.removeCallbacksAndMessages(null);
+            this.runOnUiThread(resetLastBarcode);
+
             vibrate(VIBRATION_DURATION);
             capturedBarCodes.add(barcode.displayValue);
+            Snackbar.make(mGraphicOverlay, "Barcode " + barcode.displayValue + " captured",
+                    Snackbar.LENGTH_LONG).show();
         }
     }
 
     private void vibrate(int milliseconds) {
         Vibrator vb = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         vb.vibrate(milliseconds);
+    }
+
+    private Handler handler = new Handler();
+    private class CustomTask implements Runnable {
+
+        @Override
+        public void run() {
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    lastBarcode = null;
+                }
+            }, 1000);
+        }
     }
 }
