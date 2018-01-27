@@ -241,6 +241,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     public void sendOrder(View view) {
         final Context context = this;
+        if (dataModels == null || dataModels.isEmpty()) {
+            Toast.makeText(context, "Can't place order. Order is empty", Toast.LENGTH_LONG).show();
+            return;
+        }
         StringRequest stringRequest = new StringRequest(Request.Method.PUT, URL,
                 new Response.Listener<String>() {
 
