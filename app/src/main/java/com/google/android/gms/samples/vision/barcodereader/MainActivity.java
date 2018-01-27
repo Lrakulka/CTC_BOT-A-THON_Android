@@ -20,33 +20,28 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.app.Activity;
-import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.samples.vision.barcodereader.adapter.CustomAdapter;
-import com.google.android.gms.samples.vision.barcodereader.domain.DataModel;
+import com.google.android.gms.samples.vision.barcodereader.dto.DataModel;
 import com.google.android.gms.samples.vision.barcodereader.domain.Product;
-import com.google.android.gms.vision.barcode.Barcode;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +54,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final int RC_BARCODE_CAPTURE = 9001;
     private static final String TAG = "BarcodeMain";
-    public static final String URL = "http://ecsc00a00eec.epam.com/product";
+    public static final String URL = "http://ecsc00a00eec.epam.com:8080/product";
 
     private RequestQueue queue;
     private Map<String, Product> availableProductBarcodes;
@@ -77,42 +72,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         findViewById(R.id.read_barcode).setOnClickListener(this);
 
         queue = Volley.newRequestQueue(this);
+        listView = (ListView) findViewById(R.id.order_list);
 
         getAvailableProductBarcodes();
-
-
-
-        listView=(ListView)findViewById(R.id.order_list);
-
-        dataModels= new ArrayList<>();
-
-        dataModels.add(new DataModel("Apple Pie", "Android 1.0", "1","September 23, 2008"));
-        dataModels.add(new DataModel("Banana Bread", "Android 1.1", "2","February 9, 2009"));
-        dataModels.add(new DataModel("Cupcake", "Android 1.5", "3","April 27, 2009"));
-        dataModels.add(new DataModel("Donut","Android 1.6","4","September 15, 2009"));
-        dataModels.add(new DataModel("Eclair", "Android 2.0", "5","October 26, 2009"));
-        dataModels.add(new DataModel("Froyo", "Android 2.2", "8","May 20, 2010"));
-        dataModels.add(new DataModel("Gingerbread", "Android 2.3", "9","December 6, 2010"));
-        dataModels.add(new DataModel("Honeycomb","Android 3.0","11","February 22, 2011"));
-        dataModels.add(new DataModel("Ice Cream Sandwich", "Android 4.0", "14","October 18, 2011"));
-        dataModels.add(new DataModel("Jelly Bean", "Android 4.2", "16","July 9, 2012"));
-        dataModels.add(new DataModel("Kitkat", "Android 4.4", "19","October 31, 2013"));
-        dataModels.add(new DataModel("Lollipop","Android 5.0","21","November 12, 2014"));
-        dataModels.add(new DataModel("Marshmallow", "Android 6.0", "23","October 5, 2015"));
-
-        adapter= new CustomAdapter(dataModels,getApplicationContext());
-
-        listView.setAdapter(adapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                DataModel dataModel= dataModels.get(position);
-
-                Snackbar.make(view, dataModel.getName()+"\n"+dataModel.getType()+" API: "+dataModel.getVersion_number(), Snackbar.LENGTH_LONG)
-                        .setAction("No action", null).show();
-            }
-        });
     }
 
     /**
@@ -163,9 +125,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     List<String> barcodes = data
                             .getStringArrayListExtra(BarcodeCaptureActivity.BarcodeObjects);
 
-                    barcodes = filterBarCodes(barcodes);
-                    updateOrderList(barcodes);
-                    Log.d(TAG, "Barcodes read: " + barcodes.toString());
+                    Map<String, Integer> barcodesQuantity = filterBarCodes(barcodes);
+
+                    updateOrderList(barcodesQuantity, availableProductBarcodes);
+
+                    Log.d(TAG, "Barcodes read: " + barcodesQuantity.toString());
                 } else {
                     Toast.makeText(this, R.string.barcodes_failure, Toast.LENGTH_LONG)
                             .show();
@@ -182,16 +146,52 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    private void updateOrderList(List<String> barcodes) {
-        //TODO: fill with user List
+    private void updateOrderList(Map<String, Integer> barcodesQuantity,
+                                 Map<String, Product> availableProductBarcodes) {
+
+        if (dataModels == null) {
+            dataModels = new ArrayList<>();
+        }
+
+        for (String barcode : availableProductBarcodes.keySet()) {
+            if (barcode == null || barcode.isEmpty()) {
+                continue;
+            }
+            Product product = availableProductBarcodes.get(barcode);
+            DataModel dataModel = new DataModel(
+                    product.getName(),
+                    barcode,
+                    barcodesQuantity.containsKey(barcode) ? barcodesQuantity.get(barcode) : 0,
+                    product.getImageUri(),
+                    product.getCategory().getName() + " Price " + product.getPrice().toString());
+            if (dataModels.contains(dataModel)) {
+                DataModel originDataModel = dataModels.get(dataModels.indexOf(dataModel));
+                originDataModel.setProductQuantity(originDataModel.getProductQuantity()
+                        + dataModel.getProductQuantity());
+            } else {
+                dataModels.add(dataModel);
+            }
+        }
+
+        Collections.sort(dataModels, new Comparator<DataModel>() {
+            @Override
+            public int compare(DataModel o1, DataModel o2) {
+                return o2.getProductQuantity().compareTo(o1.getProductQuantity());
+            }
+        });
+
+        adapter = new CustomAdapter(dataModels, getApplicationContext());
+        listView.setAdapter(adapter);
     }
 
-    private List<String> filterBarCodes(List<String> barcodes) {
+    private Map<String, Integer> filterBarCodes(List<String> barcodes) {
         StringBuilder unknownBarcodes = new StringBuilder();
-        List<String> correctBarcodes = new ArrayList<>();
+        Map<String, Integer> BarcodeQuantity = new HashMap<>();
         for (String barcode : barcodes) {
             if (availableProductBarcodes.containsKey(barcode)) {
-                correctBarcodes.add(barcode);
+                BarcodeQuantity.put(barcode,
+                        (BarcodeQuantity.containsKey(barcode) ? BarcodeQuantity.get(barcode) : 0)
+                                + 1);
             } else {
                 unknownBarcodes.append(" ").append(barcode);
             }
@@ -200,7 +200,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             unknownBarcodes.insert(0, "Not available codes:");
             Toast.makeText(this, unknownBarcodes.toString(), Toast.LENGTH_LONG).show();
         }
-        return correctBarcodes;
+        return BarcodeQuantity;
     }
 
     private void getAvailableProductBarcodes() {
@@ -224,6 +224,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         for (Product product : products) {
                             availableProductBarcodes.put(product.getBarCode(), product);
                         }
+
+                        updateOrderList(Collections.EMPTY_MAP, availableProductBarcodes);
                     }
                 },
                 new Response.ErrorListener() {
@@ -235,5 +237,64 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     }
         });
         queue.add(stringRequest);
+    }
+
+    public void sendOrder(View view) {
+        final Context context = this;
+        StringRequest stringRequest = new StringRequest(Request.Method.PUT, URL,
+                new Response.Listener<String>() {
+
+                    @Override
+                    public void onResponse(String response) {
+                        Toast.makeText(context, "Order placed",
+                                Toast.LENGTH_LONG).show();
+                    }
+                },
+
+                new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(context, "Can't make place order on the server",
+                                Toast.LENGTH_LONG).show();
+                    }
+                }) {
+
+                    @Override
+                    public byte[] getBody() throws AuthFailureError {
+                        return getOrderBody(adapter.getDataList());
+                    }
+
+                    @Override
+                    public String getBodyContentType() {
+                        return "application/json";
+                    }
+                };
+        queue.add(stringRequest);
+
+    }
+
+    private byte[] getOrderBody(ArrayList<DataModel> dataList) {
+        //TODO:
+        return new byte[0];
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+
+        // Save UI state changes to the savedInstanceState.
+        // This bundle will be passed to onCreate if the process is
+        // killed and restarted.
+
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+
+        super.onRestoreInstanceState(savedInstanceState);
+
+        // Restore UI state from the savedInstanceState.
+        // This bundle has also been passed to onCreate.
     }
 }
