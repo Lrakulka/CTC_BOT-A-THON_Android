@@ -28,6 +28,7 @@ import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -66,6 +67,9 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
     // permission request codes need to be < 256
     private static final int RC_HANDLE_CAMERA_PERM = 2;
+
+    // Time for smartphone's motor vibration
+    private static final int VIBRATION_DURATION = 100;
 
     // constants used to pass extra data in the intent
     public static final String AutoFocus = "AutoFocus";
@@ -415,9 +419,15 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             Snackbar.make(mGraphicOverlay, "Barcode " + barcode.displayValue + " already captured",
                     Snackbar.LENGTH_LONG).show();
         } else {
-            Snackbar.make(mGraphicOverlay, "Barcode " + barcode.displayValue + " already captured",
+            Snackbar.make(mGraphicOverlay, "Barcode " + barcode.displayValue + " captured",
                     Snackbar.LENGTH_LONG).show();
+            vibrate(VIBRATION_DURATION);
             capturedBarCodes.add(barcode.displayValue);
         }
+    }
+
+    private void vibrate(int milliseconds) {
+        Vibrator vb = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        vb.vibrate(milliseconds);
     }
 }
