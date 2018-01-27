@@ -35,6 +35,11 @@ public class PhoneTemplateDto {
         public void setQuantity(final Integer quantity) {
             this.quantity = quantity;
         }
+
+        public PhoneTemplateItem(String barCode, Integer quantity) {
+            this.barCode = barCode;
+            this.quantity = quantity;
+        }
     }
 
     public Long getUserId() {

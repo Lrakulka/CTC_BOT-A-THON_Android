@@ -36,6 +36,8 @@
 
         <activity android:name=".BarcodeCaptureActivity"
             android:label="Read Barcode"/>
+        <activity android:name=".UserDataActivity"
+            android:label="Get user data"/>
     </application>
 
 </manifest>

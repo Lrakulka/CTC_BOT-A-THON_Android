@@ -32,11 +32,14 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.samples.vision.barcodereader.adapter.CustomAdapter;
 import com.google.android.gms.samples.vision.barcodereader.dto.DataModel;
 import com.google.android.gms.samples.vision.barcodereader.domain.Product;
+import com.google.android.gms.samples.vision.barcodereader.dto.PhoneTemplateDto;
+import com.google.android.gms.samples.vision.barcodereader.dto.UserData;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,16 +56,17 @@ import java.util.Map;
 public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final int RC_BARCODE_CAPTURE = 9001;
+    private static final int RC_USER_DATA_GETTER = 9002;
     private static final String TAG = "BarcodeMain";
-    public static final String URL = "http://ecsc00a00eec.epam.com:8080/product";
+    private static final String URL = "http://ecsc00a00eec.epam.com:8080/product";
+    private static final String URL_PLACE_ORDER = "http://ecsc00a00eec.epam.com:8080/template/phoneOrder";
 
+    private static CustomAdapter adapter;
     private RequestQueue queue;
     private Map<String, Product> availableProductBarcodes;
-
-
-    ArrayList<DataModel> dataModels;
-    ListView listView;
-    private static CustomAdapter adapter;
+    private ArrayList<DataModel> dataModels;
+    private UserData userData;
+    private ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,7 +96,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             startActivityForResult(intent, RC_BARCODE_CAPTURE);
         }
+    }
 
+    public void setUserData(View view) {
+        if (view.getId() == R.id.user_data) {
+            // launch barcode activity.
+            Intent intent = new Intent(this, UserDataActivity.class);
+            startActivityForResult(intent, RC_USER_DATA_GETTER);
+        }
     }
 
     /**
@@ -119,30 +130,57 @@ public class MainActivity extends Activity implements View.OnClickListener {
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == RC_BARCODE_CAPTURE) {
-            if (resultCode == CommonStatusCodes.SUCCESS) {
-                if (data != null) {
-                    List<String> barcodes = data
-                            .getStringArrayListExtra(BarcodeCaptureActivity.BarcodeObjects);
+        switch (requestCode) {
+            case (RC_BARCODE_CAPTURE): {
+                if (resultCode == CommonStatusCodes.SUCCESS) {
+                    if (data != null) {
+                        List<String> barcodes = data
+                                .getStringArrayListExtra(BarcodeCaptureActivity.BarcodeObjects);
 
-                    Map<String, Integer> barcodesQuantity = filterBarCodes(barcodes);
+                        Map<String, Integer> barcodesQuantity = filterBarCodes(barcodes);
 
-                    updateOrderList(barcodesQuantity, availableProductBarcodes);
+                        updateOrderList(barcodesQuantity, availableProductBarcodes);
 
-                    Log.d(TAG, "Barcodes read: " + barcodesQuantity.toString());
+                        Log.d(TAG, "Barcodes read: " + barcodesQuantity.toString());
+                    } else {
+                        Toast.makeText(this, R.string.barcodes_failure, Toast.LENGTH_LONG)
+                                .show();
+                        Log.d(TAG, "No barcodes captured, intent data is null");
+                    }
                 } else {
-                    Toast.makeText(this, R.string.barcodes_failure, Toast.LENGTH_LONG)
+                    Toast.makeText(this, String.format(getString(R.string.barcodes_error),
+                            CommonStatusCodes.getStatusCodeString(resultCode)), Toast.LENGTH_LONG)
                             .show();
-                    Log.d(TAG, "No barcodes captured, intent data is null");
                 }
-            } else {
-                Toast.makeText(this, String.format(getString(R.string.barcodes_error),
-                        CommonStatusCodes.getStatusCodeString(resultCode)), Toast.LENGTH_LONG)
-                        .show();
+                break;
             }
-        }
-        else {
-            super.onActivityResult(requestCode, resultCode, data);
+            case (RC_USER_DATA_GETTER): {
+                if (resultCode == CommonStatusCodes.SUCCESS) {
+                    if (data != null) {
+                        Long userId = data.getLongExtra(UserDataActivity.UserID, 0);
+                        String startDate = data.getStringExtra(UserDataActivity.StartDate);
+                        Integer timeUnitAmount = data.getIntExtra(UserDataActivity.TimeUnitAmount, 0);
+                        String timeUnit = data.getStringExtra(UserDataActivity.TimeUnit);
+
+                        userData = new UserData(userId, startDate, timeUnitAmount, timeUnit);
+                        Toast.makeText(this, "User data received. User id: " + userId,
+                                Toast.LENGTH_LONG)
+                                .show();
+                        Log.d(TAG, "User data received. User id: " + userId);
+                    } else {
+                        Toast.makeText(this, "No user data captured", Toast.LENGTH_LONG)
+                                .show();
+                        Log.d(TAG, "No user data captured, intent data is null");
+                    }
+                } else {
+                    Toast.makeText(this, "Can't get user data", Toast.LENGTH_LONG)
+                            .show();
+                }
+                break;
+            }
+            default: {
+                super.onActivityResult(requestCode, resultCode, data);
+            }
         }
     }
 
@@ -241,17 +279,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     public void sendOrder(View view) {
         final Context context = this;
-        if (dataModels == null || dataModels.isEmpty()) {
-            Toast.makeText(context, "Can't place order. Order is empty", Toast.LENGTH_LONG).show();
+        if (isOrderValid(dataModels) || isUserDataValid(userData)) {
+            Toast.makeText(context, "Can't place order. Order is empty or user data incorrect",
+                    Toast.LENGTH_LONG).show();
             return;
         }
-        StringRequest stringRequest = new StringRequest(Request.Method.PUT, URL,
+        StringRequest stringRequest = new StringRequest(Request.Method.PUT, URL_PLACE_ORDER,
                 new Response.Listener<String>() {
 
                     @Override
                     public void onResponse(String response) {
-                        Toast.makeText(context, "Order placed",
-                                Toast.LENGTH_LONG).show();
+                        Toast.makeText(context, "Order placed", Toast.LENGTH_LONG).show();
                     }
                 },
 
@@ -275,12 +313,43 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     }
                 };
         queue.add(stringRequest);
+    }
 
+    private boolean isUserDataValid(UserData userData) {
+        return userData == null || userData.getStartDate().isEmpty()
+                || userData.getTimeUnit().isEmpty() || userData.getUserId() <= 0
+                || userData.getTimeUnitAmount() <= 0;
+    }
+
+    private boolean isOrderValid(List<DataModel> dataModels) {
+        return dataModels == null || dataModels.isEmpty();
     }
 
     private byte[] getOrderBody(ArrayList<DataModel> dataList) {
-        //TODO:
-        return new byte[0];
+        PhoneTemplateDto phoneTemplateDto = new PhoneTemplateDto();
+        phoneTemplateDto.setUserId(userData.getUserId());
+        phoneTemplateDto.setStartDate(userData.getStartDate());
+        phoneTemplateDto.setTimeUnit(userData.getTimeUnit());
+        phoneTemplateDto.setTimeUnitAmount(userData.getTimeUnitAmount());
+        List<PhoneTemplateDto.PhoneTemplateItem> barCodes = new ArrayList<>();
+        for (DataModel dataModel : dataModels) {
+            if (dataModel.getProductQuantity() <= 0) {
+                continue;
+            }
+            PhoneTemplateDto.PhoneTemplateItem phoneTemplateItem =
+                    new PhoneTemplateDto.PhoneTemplateItem(dataModel.getProductBarcode(),
+                            dataModel.getProductQuantity());
+            barCodes.add(phoneTemplateItem);
+        }
+        phoneTemplateDto.setBarCodes(barCodes);
+        ObjectMapper mapper = new ObjectMapper();
+        String json = "";
+        try {
+            json = mapper.writeValueAsString(phoneTemplateDto);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return json.getBytes();
     }
 
     @Override

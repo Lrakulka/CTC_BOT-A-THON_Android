@@ -40,24 +40,28 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/button5"
+            android:id="@+id/user_data"
             android:layout_width="111dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/set_time" />
+            android:text="@string/set_time"
+            android:onClick="setUserData"/>
 
         <Button
             android:id="@+id/send_order"
             android:layout_width="1dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/send_order" />
+            android:text="@string/send_order"
+            android:onClick="sendOrder"/>
 
     </LinearLayout>
 
     <ListView
         android:id="@+id/order_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent" >
+
+    </ListView>
 
 </LinearLayout>
